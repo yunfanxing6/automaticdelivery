@@ -14,11 +14,26 @@
 
 ## 🚀 快速开始 (One-Line Install)
 
+### 方式一：Docker 部署 (推荐)
 在你的 Ubuntu/Debian 服务器上执行以下命令即可一键安装：
 
 ```bash
 curl -O https://raw.githubusercontent.com/yunfanxing6/automaticdelivery/main/install.sh && sudo bash install.sh
 ```
+
+### 方式二：PM2 部署 (手动)
+如果你不想使用 Docker，可以使用 PM2 部署：
+
+1. 克隆代码
+   ```bash
+   git clone https://github.com/yunfanxing6/automaticdelivery.git
+   cd automaticdelivery
+   ```
+
+2. 运行安装脚本
+   ```bash
+   sudo bash install_pm2.sh
+   ```
 
 ## 🛠️ 手动部署
 

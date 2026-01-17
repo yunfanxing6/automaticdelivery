@@ -1,12 +1,12 @@
-import puppeteer from 'puppeteer-core';
+import puppeteer, { Browser, Page } from 'puppeteer-core';
 import { PrismaClient } from '@prisma/client';
 import path from 'path';
 
 const prisma = new PrismaClient();
 
 export class XianyuDriver {
-  private browser: puppeteer.Browser | null = null;
-  private page: puppeteer.Page | null = null;
+  private browser: Browser | null = null;
+  private page: Page | null = null;
   public qrCodeBase64: string | null = null;
   public status: 'stopped' | 'starting' | 'waiting_login' | 'running' | 'error' = 'stopped';
   public lastLog: string = '';
