@@ -24,7 +24,7 @@ check_cmd docker
 
 # 2. 确定安装目录
 INSTALL_DIR="/opt/automaticdelivery"
-REPO_URL="https://github.com/YOUR_USERNAME/automaticdelivery.git" # 用户需替换为自己的地址
+REPO_URL="https://github.com/yunfanxing6/automaticdelivery.git"
 
 if [ -d "$INSTALL_DIR" ]; then
     echo -e "${YELLOW}检测到目录 $INSTALL_DIR 已存在，准备更新...${NC}"
@@ -32,12 +32,6 @@ if [ -d "$INSTALL_DIR" ]; then
     git pull
 else
     echo -e "${GREEN}正在克隆项目到 $INSTALL_DIR ...${NC}"
-    # 如果 REPO_URL 包含 YOUR_USERNAME，提示用户
-    if [[ "$REPO_URL" == *"YOUR_USERNAME"* ]]; then
-        echo -e "${YELLOW}提示: 当前使用的是示例仓库地址，请先克隆到本地修改 install.sh 中的 REPO_URL${NC}"
-        # 这里为了演示，我们假设用户是手动上传的，或者会修改这个文件
-        # 如果是本地测试，这里可能会失败，但在服务器上运行时需要真实的 URL
-    fi
     
     sudo git clone "$REPO_URL" "$INSTALL_DIR" || {
         echo -e "${RED}克隆失败，请检查网络或 GitHub 地址是否正确。${NC}"

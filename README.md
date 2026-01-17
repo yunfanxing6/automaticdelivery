@@ -17,16 +17,14 @@
 在你的 Ubuntu/Debian 服务器上执行以下命令即可一键安装：
 
 ```bash
-curl -O https://raw.githubusercontent.com/YOUR_USERNAME/automaticdelivery/main/install.sh && sudo bash install.sh
+curl -O https://raw.githubusercontent.com/yunfanxing6/automaticdelivery/main/install.sh && sudo bash install.sh
 ```
-
-*(请将 `YOUR_USERNAME` 替换为你的 GitHub 用户名)*
 
 ## 🛠️ 手动部署
 
 1. 克隆仓库
    ```bash
-   git clone https://github.com/YOUR_USERNAME/automaticdelivery.git
+   git clone https://github.com/yunfanxing6/automaticdelivery.git
    cd automaticdelivery
    ```
 
