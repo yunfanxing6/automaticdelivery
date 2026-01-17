@@ -30,14 +30,17 @@ export class XianyuDriver {
 
       this.browser = await puppeteer.launch({
         executablePath,
-        headless: true, // Use headless for server
+        // 使用 'new' 模式或 true 强制无头模式
+        headless: 'new', 
         args: [
           '--no-sandbox', 
           '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage', // 解决 Docker 内存不足
+          '--disable-dev-shm-usage',
           '--disable-gpu',
           '--no-first-run',
-          '--no-zygote'
+          '--no-zygote',
+          // 关键：禁止显示 X11 窗口
+          '--display=:0' 
         ]
       });
 

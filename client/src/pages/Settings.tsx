@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 
 export default function Settings() {
   const [status, setStatus] = useState('stopped');
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [lastLog, setLastLog] = useState('');
+  const [loading, setLoading] = useState(false);
+  const logRef = useRef<HTMLPreElement>(null);
 
   const fetchStatus = async () => {
     try {
@@ -18,79 +20,130 @@ export default function Settings() {
   };
 
   const startDriver = async () => {
+    setLoading(true);
     try {
       await axios.post('/api/driver/start');
-      fetchStatus();
+      // Wait a bit for status to change
+      setTimeout(fetchStatus, 1000);
     } catch (error) {
-      alert('Failed to start driver');
+      alert('启动失败，请检查服务器日志');
+    } finally {
+      setLoading(false);
     }
   };
 
   const stopDriver = async () => {
+    setLoading(true);
     try {
       await axios.post('/api/driver/stop');
-      fetchStatus();
+      setTimeout(fetchStatus, 1000);
     } catch (error) {
-      alert('Failed to stop driver');
+      alert('停止失败');
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchStatus();
-    const interval = setInterval(fetchStatus, 3000);
+    const interval = setInterval(fetchStatus, 2000);
     return () => clearInterval(interval);
   }, []);
 
+  // Status badge color mapping
+  const getStatusColor = (s: string) => {
+    switch (s) {
+      case 'running': return 'bg-green-100 text-green-800 ring-green-600/20';
+      case 'waiting_login': return 'bg-yellow-100 text-yellow-800 ring-yellow-600/20';
+      case 'starting': return 'bg-blue-100 text-blue-800 ring-blue-600/20';
+      case 'error': return 'bg-red-100 text-red-800 ring-red-600/20';
+      default: return 'bg-gray-100 text-gray-800 ring-gray-600/20';
+    }
+  };
+
+  const getStatusText = (s: string) => {
+    switch (s) {
+      case 'running': return '运行中 (已登录)';
+      case 'waiting_login': return '等待扫码登录';
+      case 'starting': return '启动中...';
+      case 'error': return '发生错误';
+      case 'stopped': return '已停止';
+      default: return s.toUpperCase();
+    }
+  };
+
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-4">系统设置 & 状态</h2>
+    <div className="max-w-4xl mx-auto">
+      <h2 className="text-2xl font-bold mb-6 text-gray-800">系统设置 & 状态</h2>
       
-      <div className="bg-white p-6 rounded-lg shadow max-w-2xl">
-        <h3 className="text-lg font-medium mb-4">自动发货驱动</h3>
-        
-        <div className="mb-6">
-          <div className="flex items-center space-x-4 mb-4">
-            <span className="text-gray-700">当前状态:</span>
-            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-              ${status === 'running' ? 'bg-green-100 text-green-800' : 
-                status === 'waiting_login' ? 'bg-yellow-100 text-yellow-800' :
-                status === 'error' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'}`}>
-              {status.toUpperCase()}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="p-6 border-b border-gray-100">
+          <div className="flex justify-between items-center">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">自动发货驱动</h3>
+              <p className="text-sm text-gray-500 mt-1">控制后台浏览器实例，用于监听订单和发送消息</p>
+            </div>
+            <span className={`px-3 py-1 rounded-full text-sm font-medium ring-1 ring-inset ${getStatusColor(status)}`}>
+              {getStatusText(status)}
             </span>
           </div>
-
-          <div className="flex space-x-4">
+        </div>
+        
+        <div className="p-6 bg-gray-50/50">
+          <div className="flex space-x-4 mb-8">
             <button 
               onClick={startDriver}
-              disabled={status !== 'stopped' && status !== 'error'}
-              className="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none disabled:bg-gray-400"
+              disabled={status !== 'stopped' && status !== 'error' || loading}
+              className={`flex-1 py-3 px-4 rounded-lg shadow-sm text-sm font-semibold text-white transition-all
+                ${status !== 'stopped' && status !== 'error' 
+                  ? 'bg-gray-300 cursor-not-allowed' 
+                  : 'bg-indigo-600 hover:bg-indigo-700 hover:shadow active:scale-[0.98]'}`}
             >
-              启动驱动
+              {loading && status === 'stopped' ? '启动中...' : '启动服务'}
             </button>
             <button 
               onClick={stopDriver}
-              disabled={status === 'stopped'}
-              className="py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none disabled:bg-gray-400"
+              disabled={status === 'stopped' || loading}
+              className={`flex-1 py-3 px-4 rounded-lg shadow-sm text-sm font-semibold text-white transition-all
+                ${status === 'stopped' 
+                  ? 'bg-gray-300 cursor-not-allowed' 
+                  : 'bg-red-500 hover:bg-red-600 hover:shadow active:scale-[0.98]'}`}
             >
-              停止驱动
+              {loading && status !== 'stopped' ? '停止中...' : '停止服务'}
             </button>
           </div>
-        </div>
 
-        {status === 'waiting_login' && qrCode && (
-          <div className="mb-6 border-t pt-4">
-            <h4 className="text-md font-medium mb-2 text-center text-red-600">请使用手机淘宝/闲鱼扫码登录</h4>
-            <div className="flex justify-center">
-              <img src={qrCode} alt="Login QR Code" className="border rounded shadow-sm max-w-xs" />
+          {status === 'waiting_login' && (
+            <div className="mb-8 bg-white p-6 rounded-xl border border-yellow-200 shadow-sm text-center animate-fade-in">
+              <div className="inline-block p-2 bg-white rounded-lg border border-gray-100 shadow-inner mb-4">
+                {qrCode ? (
+                  <img src={qrCode} alt="Login QR Code" className="w-64 h-64 object-contain" />
+                ) : (
+                  <div className="w-64 h-64 flex items-center justify-center text-gray-400 bg-gray-50">
+                    正在获取二维码...
+                  </div>
+                )}
+              </div>
+              <h4 className="text-lg font-bold text-gray-900 mb-2">请使用手机淘宝/闲鱼扫码</h4>
+              <p className="text-sm text-gray-500">二维码有效期较短，请尽快扫码。如果过期请重启驱动。</p>
             </div>
-          </div>
-        )}
+          )}
 
-        <div className="border-t pt-4">
-          <h4 className="text-sm font-medium text-gray-500 mb-2">最新日志</h4>
-          <pre className="bg-gray-100 p-2 rounded text-xs text-gray-600 overflow-x-auto">
-            {lastLog || '暂无日志'}
-          </pre>
+          <div className="bg-gray-900 rounded-lg overflow-hidden shadow-inner">
+            <div className="px-4 py-2 bg-gray-800 border-b border-gray-700 flex justify-between items-center">
+              <span className="text-xs font-mono text-gray-400">系统日志</span>
+              <span className="flex h-2 w-2">
+                <span className={`animate-ping absolute inline-flex h-2 w-2 rounded-full opacity-75 ${status === 'running' ? 'bg-green-400' : 'bg-gray-400'}`}></span>
+                <span className={`relative inline-flex rounded-full h-2 w-2 ${status === 'running' ? 'bg-green-500' : 'bg-gray-500'}`}></span>
+              </span>
+            </div>
+            <pre 
+              ref={logRef}
+              className="p-4 text-xs font-mono text-green-400 overflow-x-auto whitespace-pre-wrap h-48 scrollbar-thin scrollbar-thumb-gray-700"
+            >
+              {lastLog ? `> ${lastLog}` : '> 等待日志...'}
+            </pre>
+          </div>
         </div>
       </div>
     </div>

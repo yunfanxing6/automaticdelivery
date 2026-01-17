@@ -29,10 +29,36 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, []);
 
+  const stats = {
+    total: orders.length,
+    shipped: orders.filter(o => o.status === 'shipped').length,
+    pending: orders.filter(o => o.status !== 'shipped').length,
+    revenue: '¥' + orders.reduce((acc, curr) => acc + (parseFloat(curr.product?.name?.match(/\d+/) ? '0' : '0') || 0), 0).toFixed(2) // 简化版估算，实际应该从订单取价格
+  };
+
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-4">订单记录</h2>
-      <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+      <h2 className="text-2xl font-bold mb-6 text-gray-800">仪表盘</h2>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+          <div className="text-sm font-medium text-gray-500 mb-2">总订单数</div>
+          <div className="text-3xl font-bold text-gray-900">{stats.total}</div>
+        </div>
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+          <div className="text-sm font-medium text-gray-500 mb-2">已发货</div>
+          <div className="text-3xl font-bold text-green-600">{stats.shipped}</div>
+        </div>
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+          <div className="text-sm font-medium text-gray-500 mb-2">待处理</div>
+          <div className="text-3xl font-bold text-yellow-600">{stats.pending}</div>
+        </div>
+      </div>
+
+      <div className="bg-white shadow-sm border border-gray-100 rounded-lg overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-100">
+          <h3 className="text-lg font-medium text-gray-900">最近订单</h3>
+        </div>
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
