@@ -1,6 +1,10 @@
-import puppeteer, { Browser, Page } from 'puppeteer-core';
+import puppeteer from 'puppeteer-extra';
+import StealthPlugin from 'puppeteer-extra-plugin-stealth';
+import { Browser, Page } from 'puppeteer-core';
 import { PrismaClient } from '@prisma/client';
 import path from 'path';
+
+puppeteer.use(StealthPlugin());
 
 const prisma = new PrismaClient();
 
@@ -21,6 +25,9 @@ export class XianyuDriver {
     this.status = 'starting';
     this.log('Starting browser...');
 
+    // 彻底禁止 X11 转发请求
+    delete process.env.DISPLAY;
+
     try {
       // Determine executable path based on environment
       const executablePath = process.env.CHROME_BIN || 
@@ -28,6 +35,7 @@ export class XianyuDriver {
           ? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe' 
           : '/usr/bin/chromium-browser');
 
+      // @ts-ignore - puppeteer-extra type compatibility issue
       this.browser = await puppeteer.launch({
         executablePath,
         // 使用 'new' 模式或 true 强制无头模式
@@ -53,9 +61,9 @@ export class XianyuDriver {
       // Go to Xianyu Web
       this.log('Navigating to goofish.com...');
       
-      // 增加超时时间到 60秒
+      // 优化加载策略：只等待 DOM 加载完成，不等待所有资源（图片/广告）加载，防止超时
       await this.page.goto('https://www.goofish.com/', {
-        waitUntil: 'networkidle2',
+        waitUntil: 'domcontentloaded', 
         timeout: 60000 
       });
 
