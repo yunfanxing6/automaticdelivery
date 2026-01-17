@@ -127,18 +127,56 @@ export default function Settings() {
           </div>
 
           {status === 'waiting_login' && (
-            <div className="mb-8 bg-white p-6 rounded-xl border border-yellow-200 shadow-sm text-center animate-fade-in">
-              <div className="inline-block p-2 bg-white rounded-lg border border-gray-100 shadow-inner mb-4">
-                {qrCode ? (
-                  <img src={qrCode} alt="Login QR Code" className="w-64 h-64 object-contain" />
-                ) : (
-                  <div className="w-64 h-64 flex items-center justify-center text-gray-400 bg-gray-50">
-                    正在获取二维码...
-                  </div>
-                )}
+            <div className="fixed inset-0 z-50 bg-gray-900 flex flex-col items-center justify-center p-4">
+              <div className="bg-white p-8 rounded-2xl shadow-2xl max-w-lg w-full text-center animate-fade-in transform transition-all scale-100">
+                <h2 className="text-3xl font-extrabold text-gray-900 mb-6">请扫码登录</h2>
+                
+                <div className="inline-block p-4 bg-white rounded-xl border-4 border-indigo-100 shadow-lg mb-6">
+                  {qrCode ? (
+                    <img src={qrCode} alt="Login QR Code" className="w-80 h-80 object-contain" />
+                  ) : (
+                    <div className="w-80 h-80 flex items-center justify-center text-gray-400 bg-gray-50 rounded-lg">
+                      <div className="flex flex-col items-center">
+                        <svg className="animate-spin h-10 w-10 text-indigo-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span className="text-lg">正在加载二维码...</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                <p className="text-gray-600 text-lg mb-8">
+                  请使用 <span className="font-bold text-indigo-600">手机淘宝</span> 或 <span className="font-bold text-yellow-600">闲鱼APP</span> 扫码
+                </p>
+
+                <div className="border-t pt-6">
+                    <button 
+                        onClick={() => setManualCookie(prev => prev ? '' : ' ')} // Toggle manual input visibility
+                        className="text-sm text-gray-400 hover:text-gray-600 underline"
+                    >
+                        无法扫码？尝试手动输入 Cookie
+                    </button>
+                    
+                    {manualCookie !== '' && (
+                        <div className="mt-4 flex gap-2">
+                             <input 
+                                type="text" 
+                                onChange={(e) => setManualCookie(e.target.value)}
+                                placeholder="在此粘贴 Cookie"
+                                className="flex-1 rounded border-gray-300 shadow-sm p-2 border"
+                             />
+                             <button
+                                onClick={submitCookie}
+                                className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+                             >
+                                提交
+                             </button>
+                        </div>
+                    )}
+                </div>
               </div>
-              <h4 className="text-lg font-bold text-gray-900 mb-2">请使用手机淘宝/闲鱼扫码</h4>
-              <p className="text-sm text-gray-500">二维码有效期较短，请尽快扫码。如果过期请重启驱动。</p>
             </div>
           )}
 
