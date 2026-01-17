@@ -1,0 +1,31 @@
+# Node
+node_modules/
+dist/
+npm-debug.log
+yarn-error.log
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Env
+.env
+.env.*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Docker
+deploy.tar.gz
+
+# Logs
+logs/
+*.log
