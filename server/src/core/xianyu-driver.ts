@@ -50,22 +50,40 @@ export class XianyuDriver {
       // 设置 User-Agent 防止被识别为机器人
       await this.page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
 
-      // Go to login page (Taobao login is often used for Xianyu)
-      // Or Xianyu Web (2.taobao.com) which redirects to login
-      this.log('Navigating to login page...');
+      // Go to Xianyu Web
+      this.log('Navigating to goofish.com...');
       
       // 增加超时时间到 60秒
-      await this.page.goto('https://login.taobao.com/member/login.jhtml?style=mini&from=idlefish', {
+      await this.page.goto('https://www.goofish.com/', {
         waitUntil: 'networkidle2',
         timeout: 60000 
       });
 
-      // Wait for QR code element
-      // Note: Selectors change often. This is a best-effort attempt.
-      // Usually there is a switch to QR code login mode if not default.
-      // We assume default or try to click the QR icon.
-      
-      // Take screenshot of QR code area or full page
+      // 寻找并点击登录按钮 (右上角 "登录")
+      this.log('Clicking login button...');
+      try {
+        // 等待登录按钮出现 (通常是包含 "登录" 文本的元素)
+        const loginBtn = await this.page.waitForSelector('.login-btn, button:has-text("登录"), a:has-text("登录")', { timeout: 5000 });
+        if (loginBtn) {
+            await loginBtn.click();
+        } else {
+            // 备用方案：通过文本查找
+            const buttons = await this.page.$$('button, a');
+            for (const btn of buttons) {
+                const text = await btn.evaluate(el => el.textContent);
+                if (text?.includes('登录')) {
+                    await btn.click();
+                    break;
+                }
+            }
+        }
+      } catch (e) {
+          this.log('Could not find login button, checking if already login modal is open or different page structure');
+      }
+
+      // 等待登录弹窗出现
+      await new Promise(r => setTimeout(r, 2000));
+
       this.status = 'waiting_login';
       this.log('Waiting for login...');
       
@@ -86,8 +104,22 @@ export class XianyuDriver {
     let attempts = 0;
     while (this.status === 'waiting_login' && attempts < 100) {
       try {
-        // Take screenshot for frontend
-        const screenshot = await this.page.screenshot({ encoding: 'base64' });
+        // 尝试定位二维码元素 (canvas 或 img)
+        // 闲鱼/淘宝登录弹窗通常有特定的 class，如 .qrcode-img, canvas 等
+        let qrElement = await this.page.$('canvas');
+        if (!qrElement) {
+            qrElement = await this.page.$('.qrcode-img img, img[src*="qr"]');
+        }
+
+        let screenshot;
+        if (qrElement) {
+            // 如果找到了二维码元素，只截取该元素
+            screenshot = await qrElement.screenshot({ encoding: 'base64' });
+        } else {
+            // 找不到则截取全屏
+            screenshot = await this.page.screenshot({ encoding: 'base64' });
+        }
+        
         this.qrCodeBase64 = `data:image/png;base64,${screenshot}`;
 
         // Check if logged in (url changes or specific element appears)
