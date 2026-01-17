@@ -6,6 +6,7 @@ export default function Settings() {
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [lastLog, setLastLog] = useState('');
   const [loading, setLoading] = useState(false);
+  const [manualCookie, setManualCookie] = useState('');
   const logRef = useRef<HTMLPreElement>(null);
 
   const fetchStatus = async () => {
@@ -41,6 +42,18 @@ export default function Settings() {
       alert('停止失败');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const submitCookie = async () => {
+    if (!manualCookie) return;
+    try {
+      await axios.post('/api/driver/cookie', { cookie: manualCookie });
+      alert('Cookie 设置成功，驱动将自动运行');
+      fetchStatus();
+      setManualCookie('');
+    } catch (error) {
+      alert('Cookie 设置失败');
     }
   };
 
@@ -143,6 +156,28 @@ export default function Settings() {
             >
               {lastLog ? `> ${lastLog}` : '> 等待日志...'}
             </pre>
+          </div>
+
+          <div className="mt-8 border-t pt-8">
+            <h4 className="text-md font-medium text-gray-900 mb-4">备用方案：手动 Cookie 登录</h4>
+            <div className="flex gap-4">
+                <input 
+                  type="text" 
+                  value={manualCookie}
+                  onChange={(e) => setManualCookie(e.target.value)}
+                  placeholder="在此粘贴 Cookie (格式: key=value; key2=value2)"
+                  className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
+                />
+                <button
+                  onClick={submitCookie}
+                  className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none"
+                >
+                  提交 Cookie
+                </button>
+            </div>
+            <p className="mt-2 text-xs text-gray-500">
+                如果扫码登录失败，请在本地浏览器登录闲鱼/淘宝，按 F12 -> Network -> 刷新 -> 找到第一个请求 -> 复制 Request Headers 中的 Cookie 粘贴到此处。
+            </p>
           </div>
         </div>
       </div>

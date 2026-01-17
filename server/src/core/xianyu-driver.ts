@@ -130,17 +130,29 @@ export class XianyuDriver {
         
         this.qrCodeBase64 = `data:image/png;base64,${screenshot}`;
 
-        // Check if logged in (url changes or specific element appears)
-        if (this.page.url().includes('user_admin') || await this.page.$('.login-success-marker')) {
+        // Check if logged in
+        // 1. Check for specific user elements (avatar, user id)
+        // 2. Check for redirect to user center
+        const isLoggedIn = await this.page.evaluate(() => {
+            // 闲鱼/淘宝登录后通常会有用户信息元素
+            return !!document.querySelector('.login-info') || 
+                   !!document.querySelector('.site-nav-user') ||
+                   window.location.href.includes('user_admin') ||
+                   document.cookie.includes('cookie2='); // 简单判断 cookie 存在
+        });
+
+        if (isLoggedIn) {
            this.status = 'running';
            this.qrCodeBase64 = null;
-           this.log('Login successful!');
+           this.log('Login successful (detected by page element)!');
            break;
         }
 
         // Also check if we are redirected to the main page
         const title = await this.page.title();
-        if (title.includes('闲鱼') && !title.includes('登录')) {
+        // 之前的逻辑太宽松，只要标题不含"登录"就认为成功，导致误判。
+        // 现在移除这个宽松判断，或者改为检测特定页面标题
+        if (title.includes('卖家中心') || title.includes('我的闲鱼')) {
             this.status = 'running';
             this.qrCodeBase64 = null;
             this.log('Login successful (detected by title)!');
@@ -197,6 +209,30 @@ export class XianyuDriver {
     this.log(`Marking ${orderNo} as shipped`);
     // Implement shipping logic...
     return true;
+  }
+  
+  async setCookies(cookies: string) {
+    if (!this.browser) {
+        await this.start();
+        // Wait for browser to init
+        await new Promise(r => setTimeout(r, 2000));
+    }
+    
+    if (this.page) {
+        this.log('Setting manual cookies...');
+        // cookies string format: "key1=value1; key2=value2"
+        const cookieObjects = cookies.split(';').map(pair => {
+            const [name, value] = pair.trim().split('=');
+            return { name, value, domain: '.taobao.com' }; // Default to taobao domain
+        }).filter(c => c.name && c.value);
+
+        await this.page.setCookie(...cookieObjects);
+        await this.page.reload();
+        this.status = 'running';
+        this.log('Cookies set manually. Driver running.');
+        return true;
+    }
+    return false;
   }
   
   async stop() {
