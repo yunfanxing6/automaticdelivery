@@ -31,17 +31,30 @@ export class XianyuDriver {
       this.browser = await puppeteer.launch({
         executablePath,
         headless: true, // Use headless for server
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+        args: [
+          '--no-sandbox', 
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage', // 解决 Docker 内存不足
+          '--disable-gpu',
+          '--no-first-run',
+          '--no-zygote'
+        ]
       });
 
       this.page = await this.browser.newPage();
       await this.page.setViewport({ width: 1280, height: 800 });
       
+      // 设置 User-Agent 防止被识别为机器人
+      await this.page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+
       // Go to login page (Taobao login is often used for Xianyu)
       // Or Xianyu Web (2.taobao.com) which redirects to login
       this.log('Navigating to login page...');
+      
+      // 增加超时时间到 60秒
       await this.page.goto('https://login.taobao.com/member/login.jhtml?style=mini&from=idlefish', {
-        waitUntil: 'networkidle2'
+        waitUntil: 'networkidle2',
+        timeout: 60000 
       });
 
       // Wait for QR code element
@@ -56,8 +69,9 @@ export class XianyuDriver {
       // Loop to update QR code and check login status
       this.checkLoginLoop();
 
-    } catch (error) {
-      this.log(`Error starting driver: ${error}`);
+    } catch (error: any) {
+      this.log(`Error starting driver: ${error.message || error}`);
+      console.error(error); // 打印完整错误堆栈到控制台
       this.status = 'error';
       if (this.browser) await this.browser.close();
     }
